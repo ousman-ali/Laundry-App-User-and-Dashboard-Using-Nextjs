@@ -59,7 +59,7 @@ export default function RolePermissionsPage() {
             value={roleName}
             onChange={(e) => setRoleName(e.target.value)}
             placeholder="Enter role name"
-            className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700"
+            className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
             required
           />
         </div>

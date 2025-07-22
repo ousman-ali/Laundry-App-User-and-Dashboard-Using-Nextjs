@@ -78,8 +78,8 @@ const section2NavItems: NavItem[] = [
     icon: <FileTextIcon />,
     name: "Order Management",
     subItems: [
-      { name: "List of all orders", path: "/", pro: false },
-      { name: "Create new Order", path: "/new-customer", pro: false }
+      { name: "List of all orders", path: "/all-orders", pro: false },
+      { name: "Create new Order", path: "/new-order", pro: false }
     ],
   },
   {
@@ -121,7 +121,7 @@ const section3NavItems: NavItem[] = [
 const section4NavItems: NavItem[] = [
   {
     icon: <ShieldUser />,
-    name: "Role & Permissions",
+    name: "Roles & Permissions",
     subItems: [
       { name: "View roles and permissions", path: "/all-roles", pro: false },
       { name: "Create new roles", path: "/role-create", pro: false }
@@ -170,7 +170,7 @@ const othersItems: NavItem[] = [
     name: "Authentication",
     subItems: [
       { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { name: "Sign Up", path: "/add-user", pro: false },
     ],
   },
   {
