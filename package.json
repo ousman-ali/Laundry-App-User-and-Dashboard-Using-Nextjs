@@ -20,6 +20,7 @@
     "@tailwindcss/forms": "^0.5.9",
     "@tailwindcss/postcss": "^4.0.9",
     "apexcharts": "^4.3.0",
+    "axios": "^1.11.0",
     "flatpickr": "^4.6.13",
     "lucide-react": "^0.525.0",
     "next": "15.2.3",
