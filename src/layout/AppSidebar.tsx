@@ -70,8 +70,7 @@ const section2NavItems: NavItem[] = [
     icon: <UsersIcon />,
     name: "Customer Management",
     subItems: [
-      { name: "View all customers", path: "/", pro: false },
-      { name: "Add new customer", path: "/new-customer", pro: false }
+      { name: "View all customers", path: "/", pro: false }
     ],
   },
   {
@@ -156,15 +155,15 @@ const section6NavItems: NavItem[] = [
       { name: "Set shop & currency", path: "/", pro: false },
       { name: "SMS and email config", path: "/", pro: false }
     ],
-  }
-];
-
-const othersItems: NavItem[] = [
+  },
   {
     icon: <UserCircleIcon />,
     name: "User Profile",
     path: "/profile",
   },
+];
+
+const othersItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
     name: "Authentication",
@@ -541,7 +540,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Confiduration"
+                  "Configuration"
                 ) : (
                   <HorizontaLDots />
                 )}

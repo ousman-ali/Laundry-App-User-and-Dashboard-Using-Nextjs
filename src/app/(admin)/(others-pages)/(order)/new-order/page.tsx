@@ -240,7 +240,7 @@ export default function LaundryOrderForm() {
       <div className="flex justify-end">
         <button
           type="submit"
-          className="w-[20%] justify-end mt-6 bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-700 py-3 font-semibold rounded-md shadow-md"
+          className="w-[20%] justify-end mt-6 bg-blue-100  hover:bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-700 py-3 font-semibold rounded-md"
         >
           Submit Order
         </button>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 const roles = [
   { id: 1, name: "Admin", permissions: ["Manage Users", "Manage Orders"] },
@@ -10,6 +11,10 @@ const roles = [
 ];
 
 export default function RolesTable() {
+  const { user } = useAuth();
+  console.log(user);
+  
+
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white dark:bg-gray-900 shadow-md rounded-lg overflow-x-auto">
       {/* Header section with title and button */}

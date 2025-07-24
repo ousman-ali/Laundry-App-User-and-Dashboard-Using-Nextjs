@@ -97,7 +97,7 @@ export default function RolePermissionsPage() {
         >
             Create Role
         </button>
-    </div>
+      </div>
       </form>
 
       <style jsx>{`

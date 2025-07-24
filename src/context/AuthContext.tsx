@@ -23,6 +23,7 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const PF=process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axios.post("http://127.0.0.1:8000/api/auth/login", {
+    const response = await axios.post((`${PF}/api/auth/login`), {
       email,
       password,
     });
