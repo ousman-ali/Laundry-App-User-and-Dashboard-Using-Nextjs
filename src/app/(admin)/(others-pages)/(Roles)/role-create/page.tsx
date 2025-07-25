@@ -1,22 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { usePermissions } from "@/context/PermissionsContext";
 
-const permissionsList = [
-  "create-customer",
-  "edit-customer",
-  "delete-customer",
-  "create-order",
-  "assign-order",
-  "view-reports",
-  "manage-inventory",
-  "manage-roles",
-  "view-notifications",
-];
 
 export default function RolePermissionsPage() {
   const [roleName, setRoleName] = useState("");
   const [permissions, setPermissions] = useState<string[]>([]);
+  const PF = process.env.NEXT_PUBLIC_API_URL;
+  const { permissions: permissionsListFromBackend, loading } = usePermissions();
+  const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3NTM0Mzg5MDcsImV4cCI6MTc1MzQ0MjUwNywibmJmIjoxNzUzNDM4OTA3LCJqdGkiOiJoVVZ4aEdzMFNZa001Mm9BIiwic3ViIjoiMSIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.UCdlybIN5l2uA1jzAi7pGQzaMMbCzOCuvFxUilj9i-o";
+
+  useEffect(() => {
+    console.log("Fetched permissions from context:", permissionsListFromBackend);
+    console.log("Loading status:", loading);
+  }, [permissionsListFromBackend, loading]);
+
+  useEffect(() => {
+  console.log("Selected permissions:", permissions);
+}, [permissions]);
+
 
   const togglePermission = (perm: string) => {
     setPermissions((prev) =>
@@ -31,7 +34,7 @@ export default function RolePermissionsPage() {
     setPermissions([]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!roleName.trim()) {
@@ -39,13 +42,35 @@ export default function RolePermissionsPage() {
       return;
     }
 
-    alert(`Role Created!\n\nName: ${roleName}\nPermissions: ${permissions.join(", ") || "None"}`);
+      try {
+        const res = await fetch(`${PF}/roles/create`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` // Or use context
+          },
+          body: JSON.stringify({
+            name: roleName,
+            permissions: permissions, // Array of selected perm.name
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || "Something went wrong");
+
+        alert("Role created successfully!");
+      clearForm();
+    } catch (err: any) {
+      alert(err.message);
+    }
 
     clearForm();
   };
 
+
   return (
-    <div className="w-[80%] mx-auto p-6 bg-white rounded shadow-md dark:bg-gray-800">
+    <div className="w-[90%] mx-auto p-3 bg-white rounded shadow-md dark:bg-gray-800">
       <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Create Role & Assign Permissions</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -67,21 +92,21 @@ export default function RolePermissionsPage() {
         <div>
           <p className="font-medium mb-2 text-gray-700 dark:text-gray-200">Permissions</p>
           <div
-            className="grid grid-cols-2 gap-3 max-h-48 overflow-hidden border rounded p-3 border-gray-300 dark:border-gray-700"
+            className="grid grid-cols-3 gap-3 overflow-hidden border rounded p-2 border-gray-300 dark:border-gray-700"
             style={{ scrollbarWidth: "thin" }}
           >
-            {permissionsList.map((perm) => (
+            {permissionsListFromBackend?.map((perm) => (
               <label
-                key={perm}
+                key={perm.id}
                 className="inline-flex items-center space-x-2 cursor-pointer select-none"
               >
                 <input
                   type="checkbox"
-                  checked={permissions.includes(perm)}
-                  onChange={() => togglePermission(perm)}
+                  checked={permissions.includes(perm.name)}
+                  onChange={() => togglePermission(perm.name)}
                   className="custom-checkbox"
                 />
-                <span className="capitalize text-gray-800 dark:text-gray-200">{perm.replace(/-/g, " ")}</span>
+                <span className="capitalize text-gray-800 dark:text-gray-200">{perm.name}</span>
               </label>
             ))}
           </div>

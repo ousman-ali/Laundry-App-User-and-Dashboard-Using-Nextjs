@@ -4,7 +4,7 @@ import { useSidebar } from "@/context/SidebarContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation"; 
 import { useAuth } from "@/context/AuthContext";
 
@@ -15,10 +15,10 @@ export default function AdminLayout({
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading:authLoading } = useAuth();
 
     useEffect(() => {
-      if (!user) {
+      if (authLoading && !user) {
         router.push("/signin");
       }
     }, [user, router]);
@@ -29,6 +29,15 @@ export default function AdminLayout({
     : isExpanded || isHovered
     ? "lg:ml-[290px]"
     : "lg:ml-[90px]";
+
+    // 👉 Wait for initial auth check before showing form
+  if (authLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <p className="text-gray-600 dark:text-white">Checking authentication...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen xl:flex">

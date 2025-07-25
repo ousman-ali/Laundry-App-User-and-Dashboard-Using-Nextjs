@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const { login } = useAuth();
+  const { login, loading:authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +32,15 @@ export default function SignInForm() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // 👉 Wait for initial auth check before showing form
+  if (authLoading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <p className="text-gray-600 dark:text-white">Checking authentication...</p>
+      </div>
+    );
   }
 
   return (

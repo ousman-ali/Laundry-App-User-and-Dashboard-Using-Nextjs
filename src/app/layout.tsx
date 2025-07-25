@@ -4,6 +4,7 @@ import './globals.css';
 import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { PermissionsProvider } from '@/context/PermissionsContext';
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -18,9 +19,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.className} dark:bg-gray-900`}>
         <AuthProvider>
-          <ThemeProvider>
-            <SidebarProvider>{children}</SidebarProvider>
-          </ThemeProvider>
+          <PermissionsProvider>
+            <ThemeProvider>
+              <SidebarProvider>
+                {children}
+              </SidebarProvider>
+            </ThemeProvider>
+          </PermissionsProvider>
         </AuthProvider>
       </body>
     </html>

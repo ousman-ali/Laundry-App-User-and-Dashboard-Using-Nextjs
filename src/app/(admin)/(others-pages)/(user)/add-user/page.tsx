@@ -14,18 +14,25 @@ export default function AddUserForm() {
     email: "",
     phone: "",
     password: "",
-    role: "customer",
+    password_confirmation: ""
   });
 
   const [permissions, setPermissions] = useState<string[]>(rolePermissionsMap["customer"]);
+  const [role, setRole] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === "role") {
-      setPermissions(rolePermissionsMap[value] || []);
-    }
+    // if (name === "role") {
+    //   setPermissions(rolePermissionsMap[value] || []);
+    // }
+  };
+
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setRole(value);
+    setPermissions(rolePermissionsMap[value] || []);
   };
 
   const handleRemovePermission = (perm: string) => {
@@ -40,7 +47,7 @@ export default function AddUserForm() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-gray-900 shadow-lg rounded-lg">
+    <div className="max-w-6xl mx-auto p-10 bg-white dark:bg-gray-900 shadow-lg rounded-lg">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Add New User</h2>
       </div>
@@ -57,6 +64,7 @@ export default function AddUserForm() {
             <input
               type="text"
               name="name"
+              placeholder="Enter full name"
               required
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
@@ -68,6 +76,7 @@ export default function AddUserForm() {
             <input
               type="email"
               name="email"
+              placeholder="Enter email"
               required
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
@@ -79,6 +88,7 @@ export default function AddUserForm() {
             <input
               type="text"
               name="phone"
+              placeholder="Enter phone number"
               required
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
@@ -90,6 +100,19 @@ export default function AddUserForm() {
             <input
               type="password"
               name="password"
+              placeholder="Enter password"
+              required
+              onChange={handleChange}
+              className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 dark:text-gray-200 mb-1">Confirm Password</label>
+            <input
+              type="password"
+              name="password_confirmation"
+              placeholder="Confirm password"
               required
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
@@ -105,8 +128,8 @@ export default function AddUserForm() {
             </label>
             <select
               name="role"
-              value={formData.role}
-              onChange={handleChange}
+              value={role}
+              onChange={handleRoleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
             >
               <option value="admin">Admin</option>
@@ -140,7 +163,6 @@ export default function AddUserForm() {
             )}
           </div>
         </div>
-        
       </form>
       <div className="flex justify-end">
         <button
