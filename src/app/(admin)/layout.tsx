@@ -15,10 +15,10 @@ export default function AdminLayout({
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const router = useRouter();
-  const { user, loading:authLoading } = useAuth();
+  const { user, loading } = useAuth();
 
     useEffect(() => {
-      if (authLoading && !user) {
+      if (!loading && !user) {
         router.push("/signin");
       }
     }, [user, router]);
@@ -31,7 +31,7 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
     // 👉 Wait for initial auth check before showing form
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <p className="text-gray-600 dark:text-white">Checking authentication...</p>

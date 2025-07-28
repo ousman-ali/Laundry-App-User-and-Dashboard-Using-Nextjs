@@ -2,14 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { usePermissions } from "@/context/PermissionsContext";
+import { useAuth } from "@/context/AuthContext";
 
 
 export default function RolePermissionsPage() {
   const [roleName, setRoleName] = useState("");
   const [permissions, setPermissions] = useState<string[]>([]);
   const PF = process.env.NEXT_PUBLIC_API_URL;
+  const { token } = useAuth();
   const { permissions: permissionsListFromBackend, loading } = usePermissions();
-  const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3NTM0Mzg5MDcsImV4cCI6MTc1MzQ0MjUwNywibmJmIjoxNzUzNDM4OTA3LCJqdGkiOiJoVVZ4aEdzMFNZa001Mm9BIiwic3ViIjoiMSIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.UCdlybIN5l2uA1jzAi7pGQzaMMbCzOCuvFxUilj9i-o";
+  
 
   useEffect(() => {
     console.log("Fetched permissions from context:", permissionsListFromBackend);

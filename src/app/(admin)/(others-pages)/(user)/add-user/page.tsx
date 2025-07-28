@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 
-const rolePermissionsMap: Record<string, string[]> = {
-  admin: ["Manage Users", "Manage Orders", "View Reports"],
-  washer: ["View Assigned Orders", "Update Order Status"],
-  customer: ["Create Orders", "Track Orders"],
+type Role = {
+  name: string;
+  permissions?: Permission[];
+};
+
+type Permission = {
+  name: string;
+  // Add other fields if your API returns more
 };
 
 export default function AddUserForm() {
@@ -17,8 +23,29 @@ export default function AddUserForm() {
     password_confirmation: ""
   });
 
-  const [permissions, setPermissions] = useState<string[]>(rolePermissionsMap["customer"]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [role, setRole] = useState("");
+  const [roleLists, setRoleLists] = useState<Role[]>([]);
+  const PF = process.env.NEXT_PUBLIC_API_URL;
+  const { loading, token } = useAuth();
+
+  useEffect(()=>{
+    const fetchRoles = async () => {
+      try {
+        if(!loading){
+          const res = await axios.get(`${PF}/roles/all`, 
+            {headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}` // Or use context
+            }});
+          setRoleLists(res.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchRoles();
+  }, [loading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -32,19 +59,48 @@ export default function AddUserForm() {
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setRole(value);
-    setPermissions(rolePermissionsMap[value] || []);
+    const selectedRole = roleLists.find(r => r.name === value);
+  if (selectedRole && selectedRole.permissions) {
+    // // If permissions is an array of objects with a 'name' property
+    // const permissionNames = selectedRole.permissions.map((p: any) => p.name);
+    setPermissions(selectedRole.permissions);
+  } else {
+    setPermissions([]);
+  }
   };
 
-  const handleRemovePermission = (perm: string) => {
-    setPermissions((prev) => prev.filter((p) => p !== perm));
-  };
+  // const handleRemovePermission = (perm: string) => {
+  //   setPermissions((prev) => prev.filter((p) => p !== perm));
+  // };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      const res = await axios.post(`${PF}/auth/register`, formData);
+        const user = res.data?.user;
+      const userId = user?.id;
+
+      if (!userId) {
+          console.error("User ID not found in response");
+          return;
+        }
+
+        //2️⃣ Assign the selected role to the new user using their ID
+        await axios.post(`${PF}/users/${userId}/roles`, {
+          roles: [role],
+        });
+
+        alert(`Role "${role}" assigned to user ${user?.name} (ID: ${userId})`);
+    } catch (error) {
+        console.log(error);
+      }
     const submission = { ...formData, permissions };
     console.log("Submitting user:", submission);
     // Send to API
   };
+
+  
+          console.log("Role Lists", roleLists);
 
   return (
     <div className="max-w-6xl mx-auto p-10 bg-white dark:bg-gray-900 shadow-lg rounded-lg">
@@ -132,9 +188,11 @@ export default function AddUserForm() {
               onChange={handleRoleChange}
               className="w-full px-3 py-2 border rounded-md text-gray-900 dark:text-white dark:bg-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-gray-700"
             >
-              <option value="admin">Admin</option>
-              <option value="washer">Washer</option>
-              <option value="customer">Customer</option>
+              {roleLists.map((roleList)=>(
+                <option key={roleList.name} value={roleList.name}>
+                  {roleList.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -147,14 +205,7 @@ export default function AddUserForm() {
                     key={i}
                     className="bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
                   >
-                    {perm}
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePermission(perm)}
-                      className="text-red-500 hover:text-red-700 text-xs font-bold"
-                    >
-                      ✕
-                    </button>
+                    {perm.name}
                   </li>
                 ))}
               </ul>
@@ -168,7 +219,7 @@ export default function AddUserForm() {
         <button
             type="submit"
             form="addUserForm"
-            className="py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition"
+            className="py-2 px-6 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow transition"
             >
             Add User
         </button>

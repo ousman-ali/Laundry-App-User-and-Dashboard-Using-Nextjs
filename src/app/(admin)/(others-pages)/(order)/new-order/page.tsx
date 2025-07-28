@@ -1,16 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const commonClothingTypes = ["Shirt", "Pants", "Jacket", "Bedsheet", "Dress", "Skirt"];
-
-const services = [
-  { name: "Washing", pricePerKg: 25 },
-  { name: "Ironing", pricePerKg: 20 },
-  { name: "Dry Cleaning", pricePerKg: 40 },
-  { name: "Wash & Iron", pricePerKg: 35 },
-];
 
 export default function LaundryOrderForm() {
   const [orderType, setOrderType] = useState<"normal" | "urgent" | null>("normal");
@@ -20,10 +14,33 @@ export default function LaundryOrderForm() {
   const [quantity, setQuantity] = useState(1);
   const [weight, setWeight] = useState<number | null>(null);
   const [selectedService, setSelectedService] = useState("");
+  const [pickupDate, setPickupDate] = useState<string>("");
+  const [services, setServices] = useState<{ id: number; name: string; price_per_kg: number; urgency_fee: number }[]>([]);
+  const { loading: authLoading, token } = useAuth();
+  const PF = process.env.NEXT_PUBLIC_API_URL;
 
-  const urgentFeePerKg = 10;
 
   const actualItemType = selectedType === "custom" ? customType.trim() : selectedType;
+
+  useEffect(() => {
+    if (authLoading || !token) return;
+
+    const fetchServices = async () => {
+      try {
+        const response = await fetch(`${PF}/services/all`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` // Assuming you have a token from context or props
+          }
+        });
+        const data = await response.json();
+        setServices(data);
+      } catch (error) {
+        console.error("Failed to fetch services", error);
+      }
+    };
+    fetchServices();
+  }, [authLoading, token]);
 
   const handleAddItem = () => {
     if (!actualItemType || quantity <= 0) return;
@@ -49,11 +66,12 @@ export default function LaundryOrderForm() {
   };
 
   const baseService = services.find((s) => s.name === selectedService);
-  const basePricePerKg = baseService ? baseService.pricePerKg : 0;
+  const basePricePerKg = baseService ? baseService.price_per_kg : 0;
+  const urgencyFeePerKg = baseService ? baseService.urgency_fee : 0;
 
   const totalPrice =
-    (weight || 0) *
-    (basePricePerKg + (orderType === "urgent" ? urgentFeePerKg : 0));
+  (weight || 0) * basePricePerKg +
+  (orderType === "urgent" ? (weight || 0) * urgencyFeePerKg : 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,32 +81,47 @@ export default function LaundryOrderForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-4xl mx-auto p-8 bg-white dark:bg-gray-900 dark:text-white rounded-xl space-y-6 transition-colors"
+      className="max-w-5xl mx-auto p-8 bg-white dark:bg-gray-900 dark:text-white rounded-xl space-y-6 shadow-xl transition-all"
     >
-      <h2 className="text-3xl font-bold text-center text-gray-600 dark:text-gray-100 mb-6">
+      <h2 className="text-3xl font-bold text-center text-gray-700 dark:text-white mb-6">
         Laundry Order Form
       </h2>
 
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Left: Customer Info */}
-        <div className="flex-1 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Customer Info</h3>
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Customer Info</h3>
 
-          {["Name", "Phone", "Address"].map((label) => (
+          {[
+            { label: "Name", type: "text" },
+            { label: "Phone", type: "text" },
+            { label: "Address", type: "text" },
+          ].map(({ label, type }) => (
             <div key={label}>
-              <label className="block font-medium text-gray-600 dark:text-gray-400">{label}</label>
+              <label className="block font-medium text-gray-600 dark:text-gray-400 mb-1">{label}</label>
               <input
                 required
-                type="text"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                type={type}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               />
             </div>
           ))}
+
+          <div>
+            <label className="block font-medium text-gray-600 dark:text-gray-400 mb-1">Pickup Date</label>
+            <input
+              required
+              type="date"
+              value={pickupDate}
+              onChange={(e) => setPickupDate(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            />
+          </div>
         </div>
 
         {/* Right: Order Info */}
-        <div className="flex-1 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Order Details</h3>
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Order Details</h3>
 
           {/* Service Selection */}
           <div>
@@ -103,8 +136,8 @@ export default function LaundryOrderForm() {
             >
               <option value="">-- Choose a Service --</option>
               {services.map((service) => (
-                <option key={service.name} value={service.name}>
-                  {service.name} ({service.pricePerKg} birr/kg)
+                <option key={service.id} value={service.name}>
+                  {service.name} ({service.price_per_kg} birr/kg)
                 </option>
               ))}
             </select>
@@ -139,7 +172,7 @@ export default function LaundryOrderForm() {
                       />
                     </div>
                     <span className="capitalize">
-                      {type} {type === "urgent" && `(+${urgentFeePerKg} birr/kg)`}
+                      {type} {type === "urgent" && `(+${urgencyFeePerKg} birr/kg)`}
                     </span>
                   </button>
                 );
@@ -188,7 +221,7 @@ export default function LaundryOrderForm() {
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="bg-blue-100 dark:bg-blue-800 dark:text-white text-blue-800 px-4 py-2 rounded-lg hover:bg-blue-200"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
               >
                 Add
               </button>
@@ -240,7 +273,7 @@ export default function LaundryOrderForm() {
       <div className="flex justify-end">
         <button
           type="submit"
-          className="w-[20%] justify-end mt-6 bg-blue-100  hover:bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-700 py-3 font-semibold rounded-md"
+          className="mt-6 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 font-semibold rounded-md"
         >
           Submit Order
         </button>

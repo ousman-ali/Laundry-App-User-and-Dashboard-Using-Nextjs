@@ -7,7 +7,8 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  roles: string[];        // changed to array for clarity
+  permissions: string[];  // changed to array for clarity
 }
 
 interface AuthContextProps {
@@ -26,9 +27,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const PF = process.env.NEXT_PUBLIC_API_URL;
 
+  // Load saved user/token from localStorage on mount
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    const storedRefreshToken = localStorage.getItem("refresh_token");
     const storedUser = localStorage.getItem("user");
 
     if (storedToken && storedUser) {
@@ -39,22 +40,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
+  // 🔐 Fetch Authenticated User
+  const fetchUser = async (accessToken: string) => {
+    try {
+      const response = await axios.get(`${PF}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      setUser(response.data);
+      localStorage.setItem("user", JSON.stringify(response.data));
+    } catch (err) {
+      console.error("Failed to fetch user", err);
+      logout();
+    }
+  };
+
+  // ✅ Login and save tokens
   const login = async (email: string, password: string) => {
     const response = await axios.post(`${PF}/auth/login`, {
       email,
       password,
     });
 
-    const { access_token, refresh_token, user } = response.data;
+    const { access_token, refresh_token } = response.data.authorization;
 
     setToken(access_token);
-    setUser(user);
-
     localStorage.setItem("token", access_token);
     localStorage.setItem("refresh_token", refresh_token);
-    localStorage.setItem("user", JSON.stringify(user));
+
+    await fetchUser(access_token);
   };
 
+  // ✅ Logout user
   const logout = async () => {
     try {
       if (token) {
@@ -73,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
   };
 
+  // 🔁 Refresh token
   const refreshAccessToken = async () => {
     const refresh_token = localStorage.getItem("refresh_token");
     if (!refresh_token) return;
@@ -90,12 +110,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (newRefreshToken) {
         localStorage.setItem("refresh_token", newRefreshToken);
       }
+
+      await fetchUser(access_token);
     } catch (error) {
-      console.error("Failed to refresh token", error);
-      logout(); // Optional: log user out if refresh fails
+      console.error("Token refresh failed", error);
+      logout();
     }
   };
 
+  // Auto-refresh every 10 mins (or adjust to just before expiry)
   useEffect(() => {
     const interval = setInterval(() => {
       refreshAccessToken();
@@ -107,12 +130,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {loading ? (
-      <div className="h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-          ) : (
-            children
-          )}
+        <div className="h-screen flex items-center justify-center">
+          <p>Loading...</p>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };

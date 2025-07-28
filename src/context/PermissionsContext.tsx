@@ -32,11 +32,13 @@ interface PermissionsProviderProps {
 }
 
 export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
-  const { loading: authLoading } = useAuth(); // from your AuthContext
+  const { loading: authLoading, user } = useAuth(); // from your AuthContext
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const PF = process.env.NEXT_PUBLIC_API_URL;
-  const token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYXBpL2F1dGgvbG9naW4iLCJpYXQiOjE3NTM0Mzg5MDcsImV4cCI6MTc1MzQ0MjUwNywibmJmIjoxNzUzNDM4OTA3LCJqdGkiOiJoVVZ4aEdzMFNZa001Mm9BIiwic3ViIjoiMSIsInBydiI6IjIzYmQ1Yzg5NDlmNjAwYWRiMzllNzAxYzQwMDg3MmRiN2E1OTc2ZjcifQ.UCdlybIN5l2uA1jzAi7pGQzaMMbCzOCuvFxUilj9i-o";
+  const { token } = useAuth();
+
+  console.log("user permissions", user?.permissions);
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -65,9 +67,10 @@ export const PermissionsProvider = ({ children }: PermissionsProviderProps) => {
   
     console.log("Permissions:", permissions);
 
-
+  //Check whether user has certain permissions or not
+  const userPermissions = user?.permissions || [];
   const hasPermission = (permissionName: string) =>
-    permissions.some((permission) => permission.name === permissionName);
+    userPermissions.some((permission) => permission === permissionName);
 
   return (
     <PermissionsContext.Provider value={{ permissions, loading, hasPermission }}>

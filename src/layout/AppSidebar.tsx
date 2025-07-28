@@ -25,13 +25,14 @@ import {
   SettingsIcon,
   Bell
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
+import { usePermissions } from "@/context/PermissionsContext";
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  subItems?: { name: string; path: string; pro?: boolean; new?: boolean; permission?: string }[];
+  permission?: string;
 };
 
 const navItems: NavItem[] = [
@@ -69,24 +70,27 @@ const section2NavItems: NavItem[] = [
   {
     icon: <UsersIcon />,
     name: "Customer Management",
+    permission: "customers.index||customers.show||customers.store||customers.update||customers.destroy",
     subItems: [
-      { name: "View all customers", path: "/", pro: false }
+      { name: "View all customers", path: "/", pro: false, permission: "customers.show" },
     ],
   },
   {
     icon: <FileTextIcon />,
     name: "Order Management",
+    permission: "orders.index||orders.store||orders.show||orders.update||orders.destroy",
     subItems: [
-      { name: "List of all orders", path: "/all-orders", pro: false },
-      { name: "Create new Order", path: "/new-order", pro: false }
+      { name: "List of all orders", path: "/all-orders", pro: false, permission: "orders.index" },
+      { name: "Create new Order", path: "/new-order", pro: false, permission: "orders.store" }
     ],
   },
   {
     icon: <Package />,
     name: "Order Item Management",
+    permission: "order-items.index||order-items.store||order-items.show||order-items.update||order-items.destroy",
     subItems: [
-      { name: "View order items", path: "/", pro: false },
-      { name: "Add new order item", path: "/", pro: false }
+      { name: "View order items", path: "/", pro: false, permission: "order-items.index" },
+      { name: "Add new order item", path: "/", pro: false, permission: "order-items.store" }
     ],
   }
 ];
@@ -95,17 +99,18 @@ const section3NavItems: NavItem[] = [
   {
     icon: <BoxCubeIcon />,
     name: "Inventory Management",
+    permission: "stock-items.index||stock-items.store||stock-items.show||stock-items.update||stock-items.destroy",
     subItems: [
-      { name: "View stock items", path: "/line-chart", pro: false },
-      { name: "Add new stock item", path: "/line-chart", pro: false },
+      { name: "View stock items", path: "/line-chart", pro: false, permission: "stock-items.index" },
+      { name: "Add new stock item", path: "/line-chart", pro: false, permission: "stock-items.store" },
     ],
   },
   {
     icon: <Blocks />,
     name: "Service & Pricing",
     subItems: [
-      { name: "Availbale Services", path: "/line-chart", pro: false },
-      { name: "Base prices per item", path: "/", pro: false },
+      { name: "Availbale Services", path: "/available-services", pro: false },
+      { name: "Add New Services", path: "/add-services", pro: false },
     ],
   },
   {
@@ -121,9 +126,10 @@ const section4NavItems: NavItem[] = [
   {
     icon: <ShieldUser />,
     name: "Roles & Permissions",
+    permission: "roles.index||roles.store||roles.show||roles.update||roles.destroy",
     subItems: [
-      { name: "View roles and permissions", path: "/all-roles", pro: false },
-      { name: "Create new roles", path: "/role-create", pro: false }
+      { name: "View roles and permissions", path: "/all-roles", pro: false, permission: "roles.index" },
+      { name: "Create new roles", path: "/role-create", pro: false, permission: "roles.store" },
     ],
   }
 ];
@@ -163,6 +169,18 @@ const section6NavItems: NavItem[] = [
   },
 ];
 
+const section7NavItems: NavItem[] = [
+  {
+    icon: <UsersIcon />,
+    name: "User Management",
+    permission: "users.index||users.show||users.store||users.update||users.destroy",
+    subItems: [
+      { name: "View all Users", path: "/", pro: false, permission: "users.show" },
+      { name: "Add New User", path: "/add-user", pro: false, permission: "register" },
+    ],
+  }
+];
+
 const othersItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
@@ -197,13 +215,19 @@ const othersItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
+  const { hasPermission} = usePermissions();
 
   const renderMenuItems = (
     navItems: NavItem[],
-    menuType: "main" | "others" | "section2" | "section3" | "section4" | "section5" | "section6" | "others"  
+    menuType: "main" | "others" | "section2" | "section3" | "section4" | "section5" | "section6" | "section7" | "others"  
   ) => (
     <ul className="flex flex-col gap-4">
-      {navItems.map((nav, index) => (
+        {navItems
+        .filter(navItem =>
+          !navItem.permission ||
+          navItem.permission.split("||").some(p => hasPermission(p.trim()))
+        )
+        .map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
@@ -279,7 +303,9 @@ const AppSidebar: React.FC = () => {
               }}
             >
               <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
+                {nav.subItems
+                  .filter(subItem => !subItem.permission || hasPermission(subItem.permission))
+                  .map((subItem) => (
                   <li key={subItem.name}>
                     <Link
                       href={subItem.path}
@@ -326,7 +352,7 @@ const AppSidebar: React.FC = () => {
   );
 
   const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "others";
+    type: "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "section7" | "others";
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -340,20 +366,21 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
-    ["main", "section2","section3", "section4", "section5", "section6", "others"].forEach((menuType) => {
+    ["main", "section2","section3", "section4", "section5", "section6", "section6", "others"].forEach((menuType) => {
       const items = menuType === "main" ? navItems 
           : menuType === "section2" ? section2NavItems 
           : menuType === "section3" ? section3NavItems
           : menuType === "section4" ? section4NavItems
           : menuType === "section5" ? section5NavItems
           : menuType === "section6" ? section6NavItems
+          : menuType === "section7" ? section7NavItems
           : othersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
               setOpenSubmenu({
-                type: menuType as "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "others",
+                type: menuType as "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "section7" | "others",
                 index,
               });
               submenuMatched = true;
@@ -382,7 +409,7 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "others") => {
+  const handleSubmenuToggle = (index: number, menuType: "main" | "section2" | "section3" | "section4" | "section5" | "section6" | "section7" | "others") => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
@@ -446,6 +473,7 @@ const AppSidebar: React.FC = () => {
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
+
             <div>
               <h2
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
@@ -471,10 +499,32 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Customer Operations"
-                ) : (
-                  <HorizontaLDots />
+                {isExpanded || isHovered || isMobileOpen ? 
+                (
+                "users.index||users.show||users.store||users.update||users.destroy"
+                  .split("||")
+                  .some(p => hasPermission(p.trim()))
+                ? "User" : null) 
+                : (<HorizontaLDots />
+                )}
+              </h2>
+              {renderMenuItems(section7NavItems, "section7")}
+            </div>
+
+            <div>
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                }`}
+              >
+                {isExpanded || isHovered || isMobileOpen ? 
+                ("customers.index||customers.show||customers.store||customers.update||customers.destroy" 
+                .split("||")
+                  .some(p => hasPermission(p.trim()))
+                ? "Customer Operations" : null
+                ):(<HorizontaLDots />
                 )}
               </h2>
               {renderMenuItems(section2NavItems, "section2")}
@@ -488,7 +538,8 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
+                {isExpanded || isHovered || isMobileOpen ? 
+                (
                   "Services & Staff"
                 ) : (
                   <HorizontaLDots />
@@ -505,8 +556,11 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Access Controll"
+                {isExpanded || isHovered || isMobileOpen ? 
+                ("roles.index||roles.store||roles.show||roles.update||roles.destroy"
+                  .split("||")
+                  .some(p => hasPermission(p.trim()))
+                  ? "Access Controll" : null
                 ) : (
                   <HorizontaLDots />
                 )}
@@ -564,9 +618,9 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(othersItems, "others")}
             </div>
+
           </div>
         </nav>
-        {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>
     </aside>
   );
